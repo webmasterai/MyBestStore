@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Backend workspace and migration tooling:
+    "backend/**",
+    "scripts/medusa/**",
   ]),
 ]);
 

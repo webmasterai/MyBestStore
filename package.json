@@ -6,7 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "medusa:wipe": "node scripts/medusa/wipe-medusa-catalog.mjs",
+    "medusa:bootstrap": "node scripts/medusa/phase2-bootstrap.mjs",
+    "medusa:import:shopify": "node scripts/medusa/shopify-to-medusa-import.mjs",
+    "medusa:import:delta": "node scripts/medusa/shopify-to-medusa-import.mjs",
+    "medusa:validate:parity": "node scripts/medusa/validate-parity.mjs",
+    "phase7:journey": "node scripts/phase7/customer-journey-live.mjs",
+    "phase7:load": "node scripts/phase7/load-smoke.mjs",
+    "phase7:security": "node scripts/phase7/security-smoke.mjs",
+    "phase7:hypercare": "node scripts/phase7/hypercare-monitor.mjs",
+    "phase7:decommission-check": "node scripts/phase7/shopify-decommission-check.mjs"
   },
   "dependencies": {
     "next": "16.2.4",
