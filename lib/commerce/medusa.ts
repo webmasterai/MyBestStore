@@ -123,7 +123,7 @@ function centsToAmount(value: number | string | null | undefined, currencyCode?:
   const numeric = typeof value === "string" ? Number(value) : value;
   if (typeof numeric !== "number" || !Number.isFinite(numeric)) return "0";
 
-  // PKR has 0 decimal digits in Medusa, so subunits = units.
+  // PKR has 0 decimals in Medusa
   if (currencyCode?.toUpperCase() === "PKR") {
     return numeric.toString();
   }
@@ -318,9 +318,13 @@ export async function medusaGetHomepageContent(): Promise<HomepageContent> {
   }
 }
 
-export async function medusaGetHomeProducts(first: number): Promise<CommerceProductCard[]> {
+export async function medusaGetHomeProducts(
+  first: number,
+  offset = 0
+): Promise<PaginatedProducts> {
   const searchParams = new URLSearchParams({
     limit: String(first),
+    offset: String(offset),
     fields: "*variants,*variants.calculated_price,+variants.prices,+thumbnail,+images",
     region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || "",
   });
@@ -328,14 +332,20 @@ export async function medusaGetHomeProducts(first: number): Promise<CommerceProd
     searchParams.delete("region_id");
   }
 
-  const data = await medusaFetch<{ products: MedusaProduct[] }>({
+  const data = await medusaFetch<{ products: MedusaProduct[]; count: number }>({
     path: "/store/products",
     searchParams,
     revalidate: 60,
     tags: ["home-products"],
   });
 
-  return (data.products || []).map(mapProductCard);
+  return {
+    products: (data.products || []).map(mapProductCard),
+    pageInfo: {
+      hasNextPage: offset + (data.products?.length || 0) < (data.count || 0),
+      totalCount: data.count || 0,
+    },
+  };
 }
 
 export async function medusaGetCategories(first: number): Promise<CommerceCategory[]> {
@@ -438,7 +448,8 @@ export async function medusaGetProductByHandle(
 
 export async function medusaGetCollectionByHandle(
   handle: string,
-  first: number
+  first: number,
+  offset = 0
 ): Promise<CommerceCollectionDetail | null> {
   const categoryData = await medusaFetch<{ product_categories: MedusaProductCategory[] }>({
     path: "/store/product-categories",
@@ -451,6 +462,7 @@ export async function medusaGetCollectionByHandle(
   if (category) {
     const baseParams = new URLSearchParams({
       limit: String(first),
+      offset: String(offset),
       fields: "*variants,*variants.calculated_price,+variants.prices,+thumbnail,+images",
       region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || "",
     });
@@ -461,9 +473,9 @@ export async function medusaGetCollectionByHandle(
     const categoryParams = new URLSearchParams(baseParams);
     categoryParams.append("category_id[]", category.id);
 
-    let productsData: { products: MedusaProduct[] };
+    let productsData: { products: MedusaProduct[]; count: number };
     try {
-      productsData = await medusaFetch<{ products: MedusaProduct[] }>({
+      productsData = await medusaFetch<{ products: MedusaProduct[]; count: number }>({
         path: "/store/products",
         searchParams: categoryParams,
         revalidate: 120,
@@ -472,7 +484,7 @@ export async function medusaGetCollectionByHandle(
     } catch {
       const fallbackParams = new URLSearchParams(baseParams);
       fallbackParams.set("category_id", category.id);
-      productsData = await medusaFetch<{ products: MedusaProduct[] }>({
+      productsData = await medusaFetch<{ products: MedusaProduct[]; count: number }>({
         path: "/store/products",
         searchParams: fallbackParams,
         revalidate: 120,
@@ -493,6 +505,10 @@ export async function medusaGetCollectionByHandle(
       ),
       products: {
         nodes: (productsData.products || []).map(mapProductCard),
+        pageInfo: {
+          hasNextPage: offset + (productsData.products?.length || 0) < (productsData.count || 0),
+          totalCount: productsData.count || 0,
+        },
       },
     };
   }
@@ -507,10 +523,11 @@ export async function medusaGetCollectionByHandle(
   const collection = collectionData.collections?.[0];
   if (!collection) return null;
 
-  const productsData = await medusaFetch<{ products: MedusaProduct[] }>({
+  const productsData = await medusaFetch<{ products: MedusaProduct[]; count: number }>({
     path: "/store/products",
     searchParams: new URLSearchParams({
       limit: String(first),
+      offset: String(offset),
       "collection_id[]": collection.id,
       fields: "*variants,*variants.calculated_price,+variants.prices,+thumbnail,+images",
       region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || "",
@@ -532,16 +549,25 @@ export async function medusaGetCollectionByHandle(
     ),
     products: {
       nodes: (productsData.products || []).map(mapProductCard),
+      pageInfo: {
+        hasNextPage: offset + (productsData.products?.length || 0) < (productsData.count || 0),
+        totalCount: productsData.count || 0,
+      },
     },
   };
 }
 
-export async function medusaSearchProducts(query: string, first: number) {
-  const data = await medusaFetch<{ products: MedusaProduct[] }>({
+export async function medusaSearchProducts(
+  query: string,
+  first: number,
+  offset = 0
+): Promise<PaginatedProducts> {
+  const data = await medusaFetch<{ products: MedusaProduct[]; count: number }>({
     path: "/store/products",
     searchParams: new URLSearchParams({
       q: query,
       limit: String(first),
+      offset: String(offset),
       fields: "*variants,*variants.calculated_price,+variants.prices,+thumbnail,+images",
       region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || "",
     }),
@@ -549,5 +575,11 @@ export async function medusaSearchProducts(query: string, first: number) {
     tags: ["search", query],
   });
 
-  return (data.products || []).map(mapProductCard);
+  return {
+    products: (data.products || []).map(mapProductCard),
+    pageInfo: {
+      hasNextPage: offset + (data.products?.length || 0) < (data.count || 0),
+      totalCount: data.count || 0,
+    },
+  };
 }

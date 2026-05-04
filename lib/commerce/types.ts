@@ -74,6 +74,18 @@ export type CommerceCollectionDetail = {
   image?: CommerceImage | null;
   products: {
     nodes: CommerceProductCard[];
+    pageInfo?: {
+      hasNextPage: boolean;
+      totalCount: number;
+    };
+  };
+};
+
+export type PaginatedProducts = {
+  products: CommerceProductCard[];
+  pageInfo: {
+    hasNextPage: boolean;
+    totalCount: number;
   };
 };
 

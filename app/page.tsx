@@ -5,6 +5,7 @@ import {
   getCategories,
   getHomepageContent,
   getHomeProducts,
+  getCollectionByHandle,
   isCommerceConfigured,
 } from "@/lib/commerce";
 
@@ -24,15 +25,25 @@ export default async function Home() {
     );
   }
 
-  let products: Awaited<ReturnType<typeof getHomeProducts>> = [];
+  let productsData: Awaited<ReturnType<typeof getHomeProducts>> | null = null;
   let categories: Category[] = [];
   let homepageContent: Awaited<ReturnType<typeof getHomepageContent>> | null = null;
+  
+  // Featured Collections sections
+  let ledTvs: Awaited<ReturnType<typeof getCollectionByHandle>> = null;
+  let soundBars: Awaited<ReturnType<typeof getCollectionByHandle>> = null;
+  let airPurifiers: Awaited<ReturnType<typeof getCollectionByHandle>> = null;
+  let homeTheater: Awaited<ReturnType<typeof getCollectionByHandle>> = null;
 
   try {
-    [products, categories, homepageContent] = await Promise.all([
-      getHomeProducts(),
+    [productsData, categories, homepageContent, ledTvs, soundBars, airPurifiers, homeTheater] = await Promise.all([
+      getHomeProducts(8),
       getCategories(),
       getHomepageContent(),
+      getCollectionByHandle("led-tv", 8),
+      getCollectionByHandle("sound-bar", 8),
+      getCollectionByHandle("air-purifiers", 8),
+      getCollectionByHandle("home-theater", 8),
     ]);
   } catch (err) {
     if (process.env.NODE_ENV === "development") {
@@ -51,6 +62,7 @@ export default async function Home() {
     );
   }
 
+  const products = productsData?.products || [];
   const heroProducts = products.slice(0, 3);
 
   return (
@@ -60,22 +72,114 @@ export default async function Home() {
         slides={homepageContent?.heroSlides}
       />
 
-      <section id="new-arrivals" className="py-20 md:py-28">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="flex flex-col items-center text-center mb-12 fx-fade-up">
-            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900">
-              {homepageContent?.newArrivalsTitle || "New Arrivals"}
-            </h2>
-            <p className="mt-4 text-slate-500 max-w-lg">
-              Check out our latest drops. Quality craftsmanship meets modern design in every piece.
-            </p>
+      {/* New Arrivals */}
+      <section id="new-arrivals" className="py-12 md:py-16">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+                {homepageContent?.newArrivalsTitle || "New Arrivals"}
+              </h2>
+              <p className="mt-2 text-slate-500">
+                Check out our latest drops.
+              </p>
+            </div>
+            <a href="/search" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+              View all
+            </a>
           </div>
 
-          <div className="mt-6">
-            <ProductGrid products={products} />
-          </div>
+          <ProductGrid products={products} />
         </div>
       </section>
+
+      {/* LED TVs Section */}
+      {ledTvs && ledTvs.products.nodes.length > 0 && (
+        <section className="py-12 md:py-16 bg-slate-50">
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+                  LED TV'S
+                </h2>
+                <p className="mt-2 text-slate-500">
+                  Premium entertainment systems.
+                </p>
+              </div>
+              <a href="/collections/led-tv" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                View all
+              </a>
+            </div>
+            <ProductGrid products={ledTvs.products.nodes} />
+          </div>
+        </section>
+      )}
+
+      {/* Sound Bars Section */}
+      {soundBars && soundBars.products.nodes.length > 0 && (
+        <section className="py-12 md:py-16">
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+                  Sound Bars
+                </h2>
+                <p className="mt-2 text-slate-500">
+                  Immersive audio experiences.
+                </p>
+              </div>
+              <a href="/collections/sound-bar" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                View all
+              </a>
+            </div>
+            <ProductGrid products={soundBars.products.nodes} />
+          </div>
+        </section>
+      )}
+
+      {/* Air Purifiers Section */}
+      {airPurifiers && airPurifiers.products.nodes.length > 0 && (
+        <section className="py-12 md:py-16 bg-slate-50">
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+                  Air Purifiers
+                </h2>
+                <p className="mt-2 text-slate-500">
+                  Clean air for your home.
+                </p>
+              </div>
+              <a href="/collections/air-purifiers" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                View all
+              </a>
+            </div>
+            <ProductGrid products={airPurifiers.products.nodes} />
+          </div>
+        </section>
+      )}
+
+      {/* Home Theater Section */}
+      {homeTheater && homeTheater.products.nodes.length > 0 && (
+        <section className="py-12 md:py-16">
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+                  Home Theater
+                </h2>
+                <p className="mt-2 text-slate-500">
+                  Complete cinematic setup.
+                </p>
+              </div>
+              <a href="/collections/home-theater" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                View all
+              </a>
+            </div>
+            <ProductGrid products={homeTheater.products.nodes} />
+          </div>
+        </section>
+      )}
 
       <CategorySection
         categories={categories}

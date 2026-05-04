@@ -55,7 +55,7 @@ export default async function forceStock({ container }: ExecArgs) {
         // Usually creation should be done via a workflow in v2
         console.log(`Created item ${inventoryItemId} for ${variant.title}, but needs linking.`)
       } else {
-        inventoryItemId = variantWithInventory[0].inventory_items[0].inventory_item_id
+        inventoryItemId = variantWithInventory[0]?.inventory_items?.[0]?.inventory_item_id
       }
 
       if (inventoryItemId) {
@@ -72,7 +72,10 @@ export default async function forceStock({ container }: ExecArgs) {
             location_id: [locationId]
           })
           if (levels[0]) {
-             await inventoryService.updateInventoryLevels(levels[0].id, {
+             await inventoryService.updateInventoryLevels({
+               id: levels[0].id,
+               inventory_item_id: inventoryItemId,
+               location_id: locationId,
                stocked_quantity: 10
              })
           }

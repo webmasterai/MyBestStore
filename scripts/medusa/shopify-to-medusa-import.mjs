@@ -303,8 +303,13 @@ function buildProductVariants(product) {
       (p) => p.price?.currencyCode === "PKR"
     );
 
-    const priceAmount = pkrPriceNode ? pkrPriceNode.price.amount : v.price;
-    const compareAmount = pkrPriceNode ? pkrPriceNode.compareAtPrice?.amount : v.compareAtPrice;
+   const priceAmount = parseFloat(
+  pkrPriceNode ? pkrPriceNode.price.amount : v.price
+);
+const compareAmount = parseFloat(
+  pkrPriceNode ? pkrPriceNode.compareAtPrice?.amount : v.compareAtPrice
+);
+
 
     return {
       title: v.title || "Default",
@@ -317,13 +322,13 @@ function buildProductVariants(product) {
       }, {}),
       prices: [
         {
-          amount: toCents(priceAmount),
+          amount: toCents(priceAmount, "pkr"),
           currency_code: "pkr",
         },
       ],
       metadata: {
         shopify_variant_id: v.id,
-        compare_at_price: compareAmount || null,
+        compare_at_price: compareAmount ? toCents(compareAmount, "pkr") : null,
         shopify_inventory_quantity: typeof v.inventoryQuantity === "number" ? v.inventoryQuantity : null,
         original_currency: pkrPriceNode ? "PKR" : "Shopify-Base",
       },

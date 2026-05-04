@@ -78,35 +78,50 @@ export default async function forceShipping({ container }: ExecArgs) {
   const providerId = providers[0].id
   console.log(`Using Fulfillment Provider: ${providerId}`)
 
-  // 6. Create Shipping Option
-  try {
-    const shippingOption = await fulfillmentModule.createShippingOptions({
-      name: "Standard Delivery",
-      price_type: "flat",
-      service_zone_id: serviceZone.id,
+  // 6. Create Shipping Option if it doesn't already exist
+  const existingOptions = await query.graph({
+    entity: "shipping_option",
+    fields: ["id", "name", "shipping_profile_id", "service_zone_id"],
+    filters: {
       shipping_profile_id: profileId,
-      provider_id: providerId,
-      data: {},
-      type: {
-         label: "Standard",
-         description: "Delivery in 3-5 working days",
-         code: "standard"
-      },
-      rules: [
+      service_zone_id: serviceZone.id,
+    },
+  })
+
+  const existingStandard = (existingOptions.data || []).find((option) =>
+    String(option?.name || "").toLowerCase().includes("standard")
+  )
+
+  if (existingStandard) {
+    console.log(`Using existing Shipping Option: ${existingStandard.name} (${existingStandard.id})`)
+  } else {
+    try {
+      const shippingOption = await fulfillmentModule.createShippingOptions({
+        name: "Standard Delivery",
+        price_type: "flat",
+        service_zone_id: serviceZone.id,
+        shipping_profile_id: profileId,
+        provider_id: providerId,
+        data: {},
+        type: {
+          label: "Standard",
+          description: "Delivery in 3-5 working days",
+          code: "standard"
+        },
+        rules: [
           {
-              attribute: "is_return",
-              operator: "eq",
-              value: "false"
+            attribute: "is_return",
+            operator: "eq",
+            value: "false"
           }
-      ]
-    })
-    
-    // Add Price for the shipping option
-    // In v2, prices are linked via the price set
-    console.log(`Created Shipping Option: ${shippingOption.name}`)
-    console.log("Note: You may still need to add a Price (PKR 250) to this option in Medusa Admin -> Settings -> Shipping.")
-  } catch (e) {
-    console.log("Note: Shipping option might already exist or failed:", e.message)
+        ]
+      })
+      
+      console.log(`Created Shipping Option: ${shippingOption.name}`)
+      console.log("Note: You may still need to add a Price (PKR 250) to this option in Medusa Admin -> Settings -> Shipping.")
+    } catch (e) {
+      console.log("Note: Shipping option might already exist or failed:", e.message)
+    }
   }
 
   console.log("--- Finished! ---")

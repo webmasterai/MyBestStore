@@ -219,78 +219,55 @@ export default async function seedDemoData({ container }: ExecArgs) {
     },
   });
 
-  await createShippingOptionsWorkflow(container).run({
-    input: [
-      {
-        name: "Standard Shipping",
-        price_type: "flat",
-        provider_id: "manual_manual",
-        service_zone_id: fulfillmentSet.service_zones[0].id,
-        shipping_profile_id: shippingProfile.id,
-        type: {
-          label: "Standard",
-          description: "Ship in 2-3 days.",
-          code: "standard",
-        },
-        prices: [
-          {
-            currency_code: "pkr",
-            amount: 25000,
-          },
-          {
-            region_id: region.id,
-            amount: 25000,
-          },
-        ],
-        rules: [
-          {
-            attribute: "enabled_in_store",
-            value: "true",
-            operator: "eq",
-          },
-          {
-            attribute: "is_return",
-            value: "false",
-            operator: "eq",
-          },
-        ],
-      },
-      {
-        name: "Express Shipping",
-        price_type: "flat",
-        provider_id: "manual_manual",
-        service_zone_id: fulfillmentSet.service_zones[0].id,
-        shipping_profile_id: shippingProfile.id,
-        type: {
-          label: "Express",
-          description: "Ship in 24 hours.",
-          code: "express",
-        },
-        prices: [
-          {
-            currency_code: "pkr",
-            amount: 50000,
-          },
-          {
-            region_id: region.id,
-            amount: 50000,
-          },
-        ],
-        rules: [
-          {
-            attribute: "enabled_in_store",
-            value: "true",
-            operator: "eq",
-          },
-          {
-            attribute: "is_return",
-            value: "false",
-            operator: "eq",
-          },
-        ],
-      },
-    ],
+  const existingShippingOptions = await query.graph({
+    entity: "shipping_option",
+    fields: ["id", "name", "shipping_profile_id", "service_zone_id"],
+    filters: {
+      shipping_profile_id: shippingProfile.id,
+      service_zone_id: fulfillmentSet.service_zones[0].id,
+    },
   });
+
+  if (!existingShippingOptions.data?.length) {
+    await createShippingOptionsWorkflow(container).run({
+      input: [
+        {
+          name: "Standard Shipping",
+          price_type: "flat",
+          provider_id: "manual_manual",
+          service_zone_id: fulfillmentSet.service_zones[0].id,
+          shipping_profile_id: shippingProfile.id,
+          type: {
+            label: "Standard",
+            description: "Ship in 2-3 days.",
+            code: "standard",
+          },
+          prices: [
+            {
+              currency_code: "pkr",
+              amount: 25000,
+            },
+            {
+              region_id: region.id,
+              amount: 25000,
+            },
+          ],
+          rules: [
+            {
+              attribute: "enabled_in_store",
+              value: "true",
+              operator: "eq",
+            },
+            {
+              attribute: "is_return",
+              value: "false",
+              operator: "eq",
+            },
+          ],
+        },
+      ],
+    });
+  }
   logger.info("Finished seeding fulfillment data.");
 
   await linkSalesChannelsToStockLocationWorkflow(container).run({

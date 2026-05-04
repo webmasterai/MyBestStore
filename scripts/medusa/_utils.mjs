@@ -109,8 +109,16 @@ export function chunk(array, size) {
   return out;
 }
 
-export function toCents(priceString) {
-  const n = Number(priceString);
-  if (!Number.isFinite(n)) return 0;
-  return Math.round(n * 100);
+export function toCents(priceString, currencyCode = "usd") {
+  const raw = String(priceString ?? "").trim();
+  if (!raw) return 0;
+
+  // Shopify prices are decimal strings (e.g., '107000.00').
+  // Medusa requires integers in the smallest currency unit.
+  // PKR has 0 decimals in Medusa, so we don't multiply by 100.
+  // USD/EUR have 2 decimals, so we multiply by 100.
+  const multiplier = currencyCode?.toLowerCase() === "pkr" ? 1 : 100;
+  const amount = Math.round(parseFloat(raw) * multiplier);
+
+  return Number.isFinite(amount) ? amount : 0;
 }

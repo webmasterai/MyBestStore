@@ -9,11 +9,31 @@ import { formatPKR } from "@/lib/currency";
 import { 
   medusaUpdateCart, 
   medusaGetShippingMethods, 
+  medusaGetCart,
   medusaAddShippingMethod,
   medusaCompleteCart,
   medusaGetPaymentProviders,
   medusaInitializePayment
 } from "@/lib/commerce/medusa-client";
+
+function dedupeShippingOptions(options: any[]) {
+  const seen = new Map<string, any>();
+
+  for (const option of options || []) {
+    const key = [
+      option?.service_zone_id || option?.service_zone?.id || "",
+      option?.shipping_profile_id || "",
+      option?.provider_id || "",
+      option?.amount ?? option?.calculated_price?.calculated_amount ?? 0,
+    ].join("|");
+
+    if (!seen.has(key)) {
+      seen.set(key, option);
+    }
+  }
+
+  return Array.from(seen.values());
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -64,11 +84,12 @@ export default function CheckoutPage() {
 
       // 2. Fetch shipping options
       const { shipping_options } = await medusaGetShippingMethods(cart.id);
-      setShippingOptions(shipping_options || []);
+      const uniqueShippingOptions = dedupeShippingOptions(shipping_options || []);
+      setShippingOptions(uniqueShippingOptions);
       
       // Auto-select first option if available
-      if (shipping_options?.length > 0) {
-        setSelectedShipping(shipping_options[0].id);
+      if (uniqueShippingOptions.length > 0) {
+        setSelectedShipping(uniqueShippingOptions[0].id);
       }
 
       setStep(2);
@@ -88,6 +109,22 @@ export default function CheckoutPage() {
     try {
       // 1. Add shipping method
       await medusaAddShippingMethod(cart.id, selectedShipping);
+
+      // Re-fetch cart and verify shipping method attached
+      const { cart: updatedCart } = await medusaGetCart(cart.id);
+      const shippingMethods = (updatedCart as any).shipping_methods || [];
+      const attached = shippingMethods.some((m: any) =>
+        m.option_id === selectedShipping ||
+        m.id === selectedShipping ||
+        m.shipping_option_id === selectedShipping ||
+        m.shipping_option?.id === selectedShipping ||
+        m.shipping_option?.shipping_option_id === selectedShipping
+      );
+
+      if (!attached) {
+        console.error("[Checkout] attach check failed", { updatedCart });
+        throw new Error("Failed to attach selected shipping method to cart. See console for cart debug.");
+      }
 
       // 2. Medusa v2: Fetch and Initialize COD Payment
       const regionId = cart.region?.id;
@@ -233,7 +270,7 @@ export default function CheckoutPage() {
                 <div>
                   <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-6">Shipping Method</h2>
                   <div className="space-y-4">
-                    {shippingOptions.length > 0 ? shippingOptions.map((option) => (
+                    {dedupeShippingOptions(shippingOptions).length > 0 ? dedupeShippingOptions(shippingOptions).map((option) => (
                       <label key={option.id} className={`flex items-center justify-between p-6 rounded-2xl border-2 transition-all cursor-pointer ${selectedShipping === option.id ? 'border-brand-primary bg-white shadow-xl' : 'border-slate-200 bg-white/50'}`}>
                         <div className="flex items-center gap-4">
                           <input 
@@ -247,7 +284,7 @@ export default function CheckoutPage() {
                             <div className="text-xs text-slate-500 font-bold uppercase tracking-tighter">Fast Delivery</div>
                           </div>
                         </div>
-                        <div className="font-black text-slate-900">{formatPKR(option.amount)}</div>
+                        <div className="font-black text-slate-900">{formatPKR(option.amount ?? 0)}</div>
                       </label>
                     )) : (
                       <div className="p-6 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-sm font-bold">
@@ -298,10 +335,10 @@ export default function CheckoutPage() {
             <div className="sticky top-32 rounded-3xl border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-200/50">
               <h3 className="text-xl font-black text-slate-900 tracking-tight mb-6">Order Summary</h3>
               
-              <div className="space-y-6 mb-8 max-h-[400px] overflow-auto pr-2">
+              <div className="space-y-6 mb-8 max-h-100 overflow-auto pr-2">
                 {cart.lines.nodes.map((line) => (
                   <div key={line.id} className="flex gap-4">
-                    <div className="h-20 w-20 flex-shrink-0 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden">
+                    <div className="h-20 w-20 shrink-0 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden">
                       {line.merchandise.product.featuredImage?.url && (
                         <Image 
                           src={line.merchandise.product.featuredImage.url} 
@@ -329,7 +366,7 @@ export default function CheckoutPage() {
                   <span>Shipping</span>
                   <span className="text-slate-900">
                     {selectedShipping 
-                      ? formatPKR(shippingOptions.find(o => o.id === selectedShipping)?.amount || 0)
+                      ? formatPKR(dedupeShippingOptions(shippingOptions).find(o => o.id === selectedShipping)?.amount || 0)
                       : "Calculated next"}
                   </span>
                 </div>
@@ -337,8 +374,8 @@ export default function CheckoutPage() {
                   <span className="text-lg font-black text-slate-900">Total</span>
                   <span className="text-2xl font-black text-slate-900">
                     {formatPKR(
-                      Number(cart.cost?.totalAmount.amount || 0) + 
-                      (shippingOptions.find(o => o.id === selectedShipping)?.amount || 0)
+                      Number(cart.cost?.totalAmount.amount || 0) +
+                      (dedupeShippingOptions(shippingOptions).find(o => o.id === selectedShipping)?.amount || 0)
                     )}
                   </span>
                 </div>

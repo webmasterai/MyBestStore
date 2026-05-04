@@ -12,6 +12,7 @@ import type {
   HomepageContent,
   CommerceProductCard,
   CommerceProductDetail,
+  PaginatedProducts,
 } from "@/lib/commerce/types";
 
 export type CommerceProvider = "medusa";
@@ -38,8 +39,11 @@ export function isCommerceConfigured() {
   return true;
 }
 
-export async function getHomeProducts(first = 10): Promise<CommerceProductCard[]> {
-  return medusaGetHomeProducts(first);
+export async function getHomeProducts(
+  first = 10,
+  offset = 0
+): Promise<PaginatedProducts> {
+  return medusaGetHomeProducts(first, offset);
 }
 
 export async function getCategories(first = 24): Promise<CommerceCategory[]> {
@@ -52,13 +56,18 @@ export async function getProductByHandle(handle: string): Promise<CommerceProduc
 
 export async function getCollectionByHandle(
   handle: string,
-  first = 24
+  first = 24,
+  offset = 0
 ): Promise<CommerceCollectionDetail | null> {
-  return medusaGetCollectionByHandle(handle, first);
+  return medusaGetCollectionByHandle(handle, first, offset);
 }
 
-export async function searchProducts(query: string, first = 24) {
-  return medusaSearchProducts(query, first);
+export async function searchProducts(
+  query: string,
+  first = 24,
+  offset = 0
+): Promise<PaginatedProducts> {
+  return medusaSearchProducts(query, first, offset);
 }
 
 export async function getHomepageContent(): Promise<HomepageContent> {

@@ -16,14 +16,25 @@ type Order = {
   status?: string;
   payment_status?: string;
   fulfillment_status?: string;
-  total?: number;
+  total?: number | string;
+  subtotal?: number | string;
+  item_total?: number | string;
+  item_subtotal?: number | string;
+  shipping_total?: number | string;
+  shipping_subtotal?: number | string;
   currency_code?: string;
   created_at?: string;
 };
 
-function money(value?: number, currency?: string) {
+function toNumber(value: unknown) {
+  const n = typeof value === "string" ? Number(value) : typeof value === "number" ? value : NaN;
+  return Number.isFinite(n) ? n : 0;
+}
+
+function money(value?: number | string, currency?: string) {
   const isPKR = currency?.toUpperCase() === "PKR";
-  const amount = isPKR ? String(value || 0) : String((value || 0) / 100);
+  const numeric = toNumber(value);
+  const amount = isPKR ? String(numeric) : String(numeric / 100);
 
   if (isPKR || !currency) {
     return formatPKR(amount);
@@ -33,6 +44,24 @@ function money(value?: number, currency?: string) {
     style: "currency",
     currency: currency.toUpperCase(),
   }).format(Number(amount));
+}
+
+function getOrderTotalMinor(order: Order) {
+  const total = toNumber(order.total);
+  const subtotal = toNumber(order.subtotal);
+  const shippingTotal = toNumber(order.shipping_total ?? order.shipping_subtotal);
+
+  // Medusa v2: 'total' is the grand total including shipping and taxes.
+  if (total) return total;
+
+  // Fallback if 'total' is missing for some reason
+  if (subtotal) {
+    return subtotal + shippingTotal;
+  }
+
+  // Last-resort: compute from item totals
+  const itemTotal = toNumber(order.item_total ?? order.item_subtotal);
+  return itemTotal + shippingTotal;
 }
 
 export default function AccountPage() {
@@ -182,7 +211,7 @@ export default function AccountPage() {
                          </span>
                       </td>
                       <td className="px-6 py-5 text-right font-black text-slate-900">
-                        {money(order.total, order.currency_code)}
+                        {money(getOrderTotalMinor(order), order.currency_code)}
                       </td>
                     </tr>
                   ))}

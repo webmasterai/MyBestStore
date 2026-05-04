@@ -84,8 +84,11 @@ function mapMedusaCart(cart: any | null): Cart | null {
   if (!cart) return null;
 
   const currency = (cart.currency_code || "pkr").toUpperCase();
-  const decimalDigits = cart.region?.currency?.decimal_digits ?? (currency === "PKR" ? 0 : 2);
-  const divisor = Math.pow(10, decimalDigits);
+  const isPKR = currency === "PKR";
+  
+  // PKR has 0 decimals in this project, so we don't divide by 100.
+  // Other currencies (USD, EUR) have 2 decimals.
+  const divisor = isPKR ? 1 : 100;
 
   const lines = (cart.items || []).map((line: any) => ({
     id: line.id,
