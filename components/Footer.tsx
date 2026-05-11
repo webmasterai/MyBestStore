@@ -8,7 +8,7 @@ export function Footer() {
               className="text-2xl font-black tracking-tight text-white mb-6"
               style={{ fontFamily: "var(--font-heading)" }}
             >
-              MyBestStore
+              My Best Store
             </div>
             <p className="text-slate-400 leading-relaxed max-w-xs">
               The premium e-commerce destination in Pakistan. Quality meets modern design for an effortless shopping experience.
@@ -83,7 +83,7 @@ export function Footer() {
         </div>
 
         <div className="mt-16 pt-8 border-t border-slate-800 text-xs text-slate-500 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>© {new Date().getFullYear()} MyBestStore. All rights reserved.</div>
+          <div>© {new Date().getFullYear()} My Best Store. All rights reserved.</div>
           <div className="flex gap-6">
             <a className="hover:text-white" href="#">Privacy</a>
             <a className="hover:text-white" href="#">Terms</a>

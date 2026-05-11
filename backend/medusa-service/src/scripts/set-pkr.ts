@@ -11,14 +11,14 @@ export default async function setPkr({ container }: ExecArgs) {
   const storeModuleService = container.resolve(Modules.STORE);
   const regionModuleService = container.resolve(Modules.REGION);
 
-  logger.info("Updating store default currency to PKR and name to Digital Softs...");
+  logger.info("Updating store default currency to PKR and name to My Best Store...");
   const [store] = await storeModuleService.listStores();
   
   await updateStoresWorkflow(container).run({
     input: {
       selector: { id: store.id },
       update: {
-        name: "Digital Softs",
+        name: "My Best Store",
         supported_currencies: [
           { currency_code: "pkr", is_default: true },
           { currency_code: "usd", is_default: false }

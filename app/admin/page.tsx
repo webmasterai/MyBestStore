@@ -19,8 +19,8 @@ export default function AdminPage() {
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-foreground/70">
         Product/category CRUD, pricing, inventory, and order operations are enabled through
-        Digital Softs. Homepage hero/category promo content is editable in this frontend
-        portal and persisted into Digital Softs store metadata.
+        My Best Store. Homepage hero/category promo content is editable in this frontend
+        portal and persisted into My Best Store store metadata.
       </p>
 
       <div className="mt-8 grid gap-4 md:grid-cols-2">
@@ -60,7 +60,7 @@ export default function AdminPage() {
           rel="noreferrer"
           className="rounded-2xl border border-foreground/10 bg-background p-5 shadow-sm"
         >
-          <h2 className="text-lg font-semibold">Open Digital Softs</h2>
+          <h2 className="text-lg font-semibold">Open My Best Store</h2>
           <p className="mt-2 text-sm text-foreground/70">
             Manage product and category CRUD, inventory, pricing, and order lifecycle.
           </p>

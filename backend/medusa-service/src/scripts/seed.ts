@@ -106,7 +106,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
     input: {
       selector: { id: store.id },
       update: {
-        name: "Digital Softs",
+        name: "My Best Store",
         default_sales_channel_id: defaultSalesChannel[0].id,
       },
     },

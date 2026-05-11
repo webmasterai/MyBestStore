@@ -36,7 +36,7 @@ export function Header() {
             <span className="h-8 w-8 rounded-lg bg-brand-primary text-white grid place-items-center text-xs font-black shadow-lg shadow-brand-primary/20">
               MB
             </span>
-            <span className="text-xl">MyBestStore</span>
+            <span className="text-xl">My Best Store</span>
           </Link>
 
           <nav className="hidden md:flex flex-1 items-center justify-center gap-1">

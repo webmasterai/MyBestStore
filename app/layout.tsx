@@ -18,8 +18,8 @@ const sora = Sora({
 });
 
 export const metadata: Metadata = {
-  title: "MyBestStore",
-  description: "MyBestStore headless storefront (Digital Soft)",
+  title: "My Best Store",
+  description: "My Best Store headless storefront",
 };
 
 export default function RootLayout({

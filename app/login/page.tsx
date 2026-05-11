@@ -54,7 +54,7 @@ export default function LoginPage() {
           MB
         </div>
         <h1 className="text-3xl font-black tracking-tight text-slate-900">
-          Welcome Back
+          Welcome to My Best Store
         </h1>
         <p className="mt-2 text-slate-500 font-medium">
           Enter your credentials to access your account.
@@ -109,7 +109,7 @@ export default function LoginPage() {
 
         <div className="pt-4 text-center">
           <p className="text-sm text-slate-500 font-medium">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link className="font-bold text-brand-primary hover:underline" href="/signup">
               Create an account
             </Link>
