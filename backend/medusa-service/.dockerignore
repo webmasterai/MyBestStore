@@ -1,0 +1,7 @@
+.git
+node_modules
+.medusa/server
+*.md
+.env
+.env.*
+!.env.template

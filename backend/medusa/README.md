@@ -11,18 +11,25 @@ docker compose up -d
 
 ## 2) Initialize Medusa Service
 
-Run this once from repo root (creates a separate backend app):
+This repo already includes the Medusa service in `backend/medusa-service/`.
+
+Install and run it:
 
 ```bash
-npx create-medusa-app@latest backend/medusa-service
+cd backend/medusa-service
+npm ci
+npm run dev
 ```
 
-During setup:
-- choose PostgreSQL
-- connect to `postgres://medusa:medusa@localhost:5433/medusa_db`
-- connect Redis to `redis://localhost:6380`
+It is configured (by default) to use the infrastructure started in step 1:
 
-Then run migrations/start backend from `backend/medusa-service`.
+- Postgres: `postgres://medusa:medusa@localhost:5433/medusa_db`
+- Redis: `redis://localhost:6380`
+
+Environment file:
+
+- `backend/medusa-service/.env.template` (template)
+- `backend/medusa-service/.env` (loaded in dev)
 
 ## 3) Required Environment Variables (repo root)
 

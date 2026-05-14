@@ -1,4 +1,11 @@
-@import "tailwindcss";
+/* Explicit sources avoid Turbopack choking on Tailwind's default multi-extension glob
+   (malformed alternation like `.{,aspx,...}` on strict parsers). */
+@import "tailwindcss" source(none);
+
+@source "./**/*.{js,ts,jsx,tsx,mdx}";
+@source "../components/**/*.{js,ts,jsx,tsx,mdx}";
+@source "../context/**/*.{js,ts,jsx,tsx,mdx}";
+@source "../lib/**/*.{js,ts,jsx,tsx,mdx}";
 
 :root {
   --background: #ffffff;

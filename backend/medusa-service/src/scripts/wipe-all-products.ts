@@ -1,5 +1,4 @@
 import { ExecArgs } from "@medusajs/framework/types"
-import { Modules } from "@medusajs/framework/utils"
 import { deleteProductsWorkflow } from "@medusajs/core-flows"
 
 /**
@@ -18,7 +17,7 @@ export default async function wipeAllProducts({ container }: ExecArgs) {
   const { data: products } = await query.graph({
     entity: "product",
     fields: ["id", "title"],
-    limit: 9999
+    pagination: { take: 9999, skip: 0 },
   })
 
   if (!products || products.length === 0) {

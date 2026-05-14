@@ -8,6 +8,14 @@ import {
   completeCartWorkflow,
 } from "@medusajs/medusa/core-flows"
 
+type VariantPriceRow = { currency_code?: string; amount?: number }
+type ProductVariantGraphRow = {
+  id: string
+  title?: string | null
+  product?: { title?: string } | null
+  prices?: VariantPriceRow[] | null
+}
+
 /**
  * COD Checkout Validation Script
  * 
@@ -35,7 +43,7 @@ export default async function validateCodCheckoutWithPrices({ container }: ExecA
         "product.title",
         "prices.*"
       ],
-      limit: 1
+      pagination: { take: 1, skip: 0 },
     })
 
     if (!variants || !variants.length) {
@@ -43,8 +51,8 @@ export default async function validateCodCheckoutWithPrices({ container }: ExecA
       return
     }
 
-    const variant = variants[0]
-    const pkrPrice = (variant.prices || []).find((p: any) => 
+    const variant = variants[0] as ProductVariantGraphRow
+    const pkrPrice = (variant.prices || []).find((p) =>
       (p.currency_code || "").toLowerCase() === "pkr"
     )
 
@@ -53,15 +61,17 @@ export default async function validateCodCheckoutWithPrices({ container }: ExecA
       return
     }
 
-    console.log(`Product: ${variant.product.title}`)
+    const pkrAmount = pkrPrice.amount ?? 0
+
+    console.log(`Product: ${variant.product?.title ?? "(unknown)"}`)
     console.log(`Variant: ${variant.title}`)
-    console.log(`Price (minor units): ${pkrPrice.amount}`)
-    console.log(`Price (display): ${(pkrPrice.amount / 100).toFixed(2)} PKR`)
+    console.log(`Price (minor units): ${pkrAmount}`)
+    console.log(`Price (display): ${(pkrAmount / 100).toFixed(2)} PKR`)
 
     // Sanity check: typical prices should be 500-500,000 PKR (50,000 - 50,000,000 minor units)
-    if (pkrPrice.amount < 5000 || pkrPrice.amount > 100000000) {
+    if (pkrAmount < 5000 || pkrAmount > 100000000) {
       console.warn(
-        `⚠ Warning: Price ${pkrPrice.amount} seems unusual (typical range: 5,000-100,000,000 minor units)`
+        `⚠ Warning: Price ${pkrAmount} seems unusual (typical range: 5,000-100,000,000 minor units)`
       )
     } else {
       console.log(`✓ Price looks reasonable\n`)
@@ -99,7 +109,7 @@ export default async function validateCodCheckoutWithPrices({ container }: ExecA
           {
             variant_id: variant.id,
             quantity: 1,
-            unit_price: pkrPrice.amount,
+            unit_price: pkrAmount,
           }
         ],
         shipping_address: {
@@ -121,12 +131,12 @@ export default async function validateCodCheckoutWithPrices({ container }: ExecA
 
     console.log(`Cart ID: ${cart.id}`)
     console.log(`Cart subtotal (minor units): ${cart.subtotal || 0}`)
-    console.log(`Expected: ${pkrPrice.amount}`)
+    console.log(`Expected: ${pkrAmount}`)
     
-    if (cart.subtotal === pkrPrice.amount) {
+    if (cart.subtotal === pkrAmount) {
       console.log(`✓ Cart subtotal matches product price\n`)
     } else {
-      console.warn(`⚠ Subtotal mismatch! Expected ${pkrPrice.amount}, got ${cart.subtotal}\n`)
+      console.warn(`⚠ Subtotal mismatch! Expected ${pkrAmount}, got ${cart.subtotal}\n`)
     }
 
     // 4. Get shipping options
@@ -190,19 +200,18 @@ export default async function validateCodCheckoutWithPrices({ container }: ExecA
     // Get available payment providers
     const { data: providers } = await query.graph({
       entity: "payment_provider",
-      fields: ["id", "provider_id", "is_enabled", "is_installed"]
+      fields: ["id", "is_enabled"],
     })
 
-    const systemProvider = (providers || []).find((p: any) => 
-      p.id === "pp_system_default" || 
-      p.provider_id === "pp_system_default"
+    const systemProvider = (providers || []).find(
+      (p: { id?: string }) => p.id === "pp_system_default"
     )
 
     if (!systemProvider) {
       console.warn("⚠ System payment provider not found, using first available.")
     }
 
-    const providerId = systemProvider?.id || systemProvider?.provider_id || "pp_system_default"
+    const providerId = systemProvider?.id || "pp_system_default"
     console.log(`Using provider: ${providerId}`)
 
     const { result: paymentSession } = await createPaymentSessionsWorkflow(container).run({
@@ -224,12 +233,42 @@ export default async function validateCodCheckoutWithPrices({ container }: ExecA
     // 8. Complete cart
     console.log("Step 8: Completing order...\n")
     
-    const { result: order } = await completeCartWorkflow(container).run({
+    const { result: completed } = await completeCartWorkflow(container).run({
       input: { id: cart.id }
     })
 
-    if (!order) {
+    if (!completed?.id) {
       console.error("✗ Failed to complete cart.")
+      return
+    }
+
+    const { data: orderRows } = await query.graph({
+      entity: "order",
+      fields: [
+        "id",
+        "status",
+        "display_id",
+        "total",
+        "subtotal",
+        "shipping_total",
+        "tax_total",
+      ],
+      filters: { id: completed.id },
+    })
+    const order = orderRows?.[0] as
+      | {
+          id: string
+          status?: string
+          display_id?: number | string
+          total?: number
+          subtotal?: number
+          shipping_total?: number
+          tax_total?: number
+        }
+      | undefined
+
+    if (!order) {
+      console.error("✗ Order completed but could not load order details.")
       return
     }
 
@@ -244,7 +283,7 @@ export default async function validateCodCheckoutWithPrices({ container }: ExecA
     // 9. Validate final amounts
     console.log("\n=== Price Validation Summary ===\n")
     
-    const expectedSubtotal = pkrPrice.amount
+    const expectedSubtotal = pkrAmount
     const actualSubtotal = order.subtotal || 0
     
     if (actualSubtotal === expectedSubtotal) {

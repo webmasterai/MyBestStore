@@ -1,6 +1,14 @@
 import { ExecArgs } from "@medusajs/framework/types"
-import { Modules } from "@medusajs/framework/utils"
 import { updateProductVariantsWorkflow } from "@medusajs/core-flows"
+
+/** Graph row shape (remote query returns prices; generated TS entry points may omit them). */
+type VariantPriceRow = { currency_code?: string; amount?: number }
+type ProductVariantGraphRow = {
+  id: string
+  title?: string | null
+  product?: { title?: string; metadata?: Record<string, unknown> } | null
+  prices?: VariantPriceRow[] | null
+}
 
 /**
  * Migration script to fix product variant prices.
@@ -47,10 +55,10 @@ export default async function migrateFixProductPrices({ container }: ExecArgs) {
   let suspiciousCount = 0
   let suspiciousDetails: string[] = []
 
-  for (const variant of variants) {
+  for (const variant of variants as ProductVariantGraphRow[]) {
     const prices = variant.prices || []
     let shouldUpdate = false
-    const correctedPrices = []
+    const correctedPrices: Array<{ currency_code: string; amount: number }> = []
 
     for (const price of prices) {
       const currencyCode = (price.currency_code || "").toLowerCase()
@@ -60,12 +68,13 @@ export default async function migrateFixProductPrices({ container }: ExecArgs) {
       // if they were accidentally multiplied by 100.
       // (e.g., Rs 25,000 imported as 2,500,000)
       const isShopifyImport = variant.product?.metadata?.source === "shopify-import"
+      const productTitle = variant.product?.title ?? "(unknown product)"
       
       if (currencyCode === "pkr" && amount >= 100000 && isShopifyImport) {
         const correctedAmount = Math.round(amount / 100)
         suspiciousCount++
         suspiciousDetails.push(
-          `  ${variant.product.title} > ${variant.title}: ${amount} → ${correctedAmount} units`
+          `  ${productTitle} > ${variant.title}: ${amount} → ${correctedAmount} units`
         )
         correctedPrices.push({
           currency_code: currencyCode,
@@ -105,8 +114,8 @@ export default async function migrateFixProductPrices({ container }: ExecArgs) {
 
   try {
     // Use the updateProductVariantsWorkflow for batch updates
-    const { result } = await updateProductVariantsWorkflow(container).run({
-      input: { variants: updatesToApply }
+    await updateProductVariantsWorkflow(container).run({
+      input: { product_variants: updatesToApply }
     })
 
     console.log(`✓ Updated ${updatesToApply.length} variants`)
@@ -122,7 +131,7 @@ export default async function migrateFixProductPrices({ container }: ExecArgs) {
     for (const update of updatesToApply) {
       try {
         await updateProductVariantsWorkflow(container).run({
-          input: { variants: [update] }
+          input: { product_variants: [update] }
         })
         successCount++
         console.log(`✓ Fixed variant ${update.id}`)

@@ -14,7 +14,7 @@ export default async function fixInventoryLevels({ container }: ExecArgs) {
   const { data: stores } = await query.graph({
     entity: "store",
     fields: ["id", "default_sales_channel_id", "default_location_id"],
-    limit: 1,
+    pagination: { take: 1 },
   })
 
   const store = stores?.[0]
@@ -23,13 +23,13 @@ export default async function fixInventoryLevels({ container }: ExecArgs) {
   }
 
   // 2) Pick (or create) a stock location
-  let locationId: string | undefined = store.default_location_id
+  let locationId: string | undefined = store.default_location_id ?? undefined
 
   if (!locationId) {
     const { data: locations } = await query.graph({
       entity: "stock_location",
       fields: ["id", "name"],
-      limit: 50,
+      pagination: { take: 50 },
     })
 
     if (!locations?.length) {
@@ -39,24 +39,29 @@ export default async function fixInventoryLevels({ container }: ExecArgs) {
       locationId = created.id
       console.log(`✓ Created stock location: ${locationId}`)
     } else {
-      locationId = locations[0].id
+      locationId = locations[0].id ?? undefined
     }
   }
 
   console.log(`✓ Using stock location: ${locationId}`)
 
+  if (!locationId) {
+    throw new Error("Could not resolve a stock location id.")
+  }
+
   // 3) Pick sales channel(s)
   const { data: channels } = await query.graph({
     entity: "sales_channel",
     fields: ["id", "name"],
-    limit: 200,
+    pagination: { take: 200 },
   })
 
   if (!channels?.length) {
     throw new Error("No sales channels found.")
   }
 
-  const defaultSalesChannelId: string | undefined = store.default_sales_channel_id
+  const defaultSalesChannelId: string | undefined =
+    store.default_sales_channel_id ?? undefined
   const defaultSalesChannel = defaultSalesChannelId
     ? channels.find((c: any) => c.id === defaultSalesChannelId)
     : (channels.find((c: any) => c.name === "Default Sales Channel") ?? channels[0])
@@ -82,7 +87,7 @@ export default async function fixInventoryLevels({ container }: ExecArgs) {
     entity: "stock_location",
     fields: ["id", "name", "sales_channels.id", "sales_channels.name"],
     filters: { id: locationId },
-    limit: 1,
+    pagination: { take: 1 },
   })
 
   const linkedCount = linkedLocation?.[0]?.sales_channels?.length ?? 0
@@ -108,8 +113,7 @@ export default async function fixInventoryLevels({ container }: ExecArgs) {
         "allow_backorder",
         "inventory_items.inventory_item_id",
       ],
-      limit: variantScanLimit,
-      offset: variantScanOffset,
+      pagination: { take: variantScanLimit, skip: variantScanOffset },
     })
 
     if (!variants?.length) break

@@ -1,0 +1,14 @@
+# Next.js storefront image context — keep build fast and avoid leaking backend into the web layer
+.git
+.github
+**/.git
+node_modules
+.next
+*.md
+.env
+.env.*
+!.env.example
+backend
+scripts
+.cursor
+mcps

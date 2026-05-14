@@ -125,9 +125,12 @@ export default async function simulateCartCod({ container }: ExecArgs) {
     console.log("Created payment collection:", paycol?.id)
 
     // pick an enabled provider by querying available payment providers
-    const { data: available } = await query.graph({ entity: "payment_provider", fields: ["id", "provider_id", "is_enabled", "is_installed"] })
-    const enabled = (available || []).find((p: any) => p.is_enabled && p.is_installed)
-    const provider_id = enabled?.id || enabled?.provider_id || "pp_system_default"
+    const { data: available } = await query.graph({
+      entity: "payment_provider",
+      fields: ["id", "is_enabled"],
+    })
+    const enabled = (available || []).find((p: { is_enabled?: boolean }) => p.is_enabled)
+    const provider_id = enabled?.id || "pp_system_default"
 
     if (!provider_id) {
       console.error("No enabled payment provider found; cannot create payment session")

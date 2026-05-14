@@ -9,7 +9,7 @@ export default async function debugProductShippingProfile({ container }: ExecArg
   const { data: products } = await query.graph({
     entity: "product",
     fields: ["id", "title"],
-    limit: 1
+    pagination: { take: 1 },
   })
 
   // Get default shipping profile

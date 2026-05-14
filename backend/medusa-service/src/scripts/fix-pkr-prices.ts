@@ -34,7 +34,7 @@ export default async function fixPkrPrices({ container }: ExecArgs) {
 
   console.log(`Found ${prices.length} PKR prices to process.`)
 
-  const updates = []
+  const updates: { id: string; amount: number }[] = []
   let count = 0
 
   for (const price of prices) {

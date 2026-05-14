@@ -11,19 +11,19 @@ async function fetchOrders(token: string) {
   // but for authenticated /store/orders, it should just work.
   // If it's a 400, it might be because of the region_id query param format.
   
-  const attempts = [
+  const attempts: { path: string; headers: Record<string, string> }[] = [
     {
       path: "/store/orders?limit=20",
-      headers: regionId ? { "x-region-id": regionId } : {}
+      headers: regionId ? { "x-region-id": regionId } : {},
     },
     {
       path: `/store/orders?limit=20&region_id=${regionId}`,
-      headers: {}
+      headers: {},
     },
     {
       path: "/store/customers/me/orders?limit=20",
-      headers: {}
-    }
+      headers: {},
+    },
   ];
 
   for (const attempt of attempts) {
