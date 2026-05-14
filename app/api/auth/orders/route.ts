@@ -30,10 +30,12 @@ async function fetchOrders(token: string) {
     try {
       return await medusaStoreRequest<Record<string, unknown>>(
         attempt.path,
-        { 
-          method: "GET",
-          headers: attempt.headers
-        },
+        {
+            method: "GET",
+            headers: {
+              ...(attempt.headers["x-region-id"] ? { "x-region-id": attempt.headers["x-region-id"] } : {})
+            }
+          },
         token
       );
     } catch (e) {
