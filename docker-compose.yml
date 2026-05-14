@@ -1,5 +1,5 @@
-# Coolify / local production stack: Postgres + Redis + Medusa + Next storefront
-# Set public URLs and secrets in Coolify UI or a root `.env` file (never commit real secrets).
+# Coolify / local stack: Postgres + Redis + Medusa API + Next storefront
+# Set real domains in STORE_CORS / *_CORS and NEXT_PUBLIC_MEDUSA_* in Coolify (or .env).
 
 services:
   postgres:
@@ -50,28 +50,27 @@ services:
       redis:
         condition: service_healthy
 
-  #web:
-   # build:
-    #  context: .
-     # dockerfile: Dockerfile
-      #args:
-        # Must be the browser-reachable Medusa URL (Coolify domain or https://api.example.com)
-       # NEXT_PUBLIC_MEDUSA_BACKEND_URL: ${NEXT_PUBLIC_MEDUSA_BACKEND_URL:-http://localhost:9000}
-       # NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY:-pk_replace_me}
-        #NEXT_PUBLIC_MEDUSA_REGION_ID: ${NEXT_PUBLIC_MEDUSA_REGION_ID:-}
-        #NEXT_PUBLIC_MEDUSA_ADMIN_URL: ${NEXT_PUBLIC_MEDUSA_ADMIN_URL:-}
-        #NEXT_PUBLIC_COMMERCE_PROVIDER: ${NEXT_PUBLIC_COMMERCE_PROVIDER:-medusa}
-    #restart: unless-stopped
-    #ports:
-     # - "${WEB_PUBLISH_PORT:-3000}:3000"
-    #environment:
-      # Server-side routes (Next → Medusa): use internal service name on Docker network
-     # MEDUSA_BACKEND_URL: ${MEDUSA_BACKEND_URL:-http://medusa:9000}
-      #MEDUSA_ADMIN_API_TOKEN: ${MEDUSA_ADMIN_API_TOKEN:-}
-      #MEDUSA_STORE_ID: ${MEDUSA_STORE_ID:-}
-      #ADMIN_PORTAL_SECRET: ${ADMIN_PORTAL_SECRET:-change-me-in-production}
-    #depends_on:
-     # - medusa
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Browser-visible Medusa URL (Coolify public URL for the API)
+        NEXT_PUBLIC_MEDUSA_BACKEND_URL: ${NEXT_PUBLIC_MEDUSA_BACKEND_URL:-http://localhost:9000}
+        NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY:-pk_replace_me}
+        NEXT_PUBLIC_MEDUSA_REGION_ID: ${NEXT_PUBLIC_MEDUSA_REGION_ID:-}
+        NEXT_PUBLIC_MEDUSA_ADMIN_URL: ${NEXT_PUBLIC_MEDUSA_ADMIN_URL:-}
+        NEXT_PUBLIC_COMMERCE_PROVIDER: ${NEXT_PUBLIC_COMMERCE_PROVIDER:-medusa}
+    restart: unless-stopped
+    ports:
+      - "${WEB_PUBLISH_PORT:-3000}:3000"
+    environment:
+      MEDUSA_BACKEND_URL: ${MEDUSA_BACKEND_URL:-http://medusa:9000}
+      MEDUSA_ADMIN_API_TOKEN: ${MEDUSA_ADMIN_API_TOKEN:-}
+      MEDUSA_STORE_ID: ${MEDUSA_STORE_ID:-}
+      ADMIN_PORTAL_SECRET: ${ADMIN_PORTAL_SECRET:-change-me-in-production}
+    depends_on:
+      - medusa
 
 volumes:
   postgres_data:

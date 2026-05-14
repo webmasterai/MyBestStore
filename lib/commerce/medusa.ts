@@ -6,6 +6,7 @@ import type {
   CommerceProductCard,
   CommerceProductDetail,
   CommerceVariant,
+  PaginatedProducts,
 } from "@/lib/commerce/types";
 
 type MedusaConfig = {
