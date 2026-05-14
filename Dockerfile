@@ -12,7 +12,8 @@ RUN npm install
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
-COPY next.config.ts tsconfig.json postcss.config.mjs next-env.d.ts ./
+# next-env.d.ts is gitignored; Next.js generates it during `next build`
+COPY next.config.ts tsconfig.json postcss.config.mjs ./
 COPY app ./app
 COPY components ./components
 COPY context ./context
