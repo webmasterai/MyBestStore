@@ -1,5 +1,10 @@
+/**
+ * Ops script — not part of the Medusa production build (lives outside src/).
+ * Run from backend/medusa-service:
+ *   npx medusa exec ./scripts/cleanup-pakistan-shipping-options.ts
+ */
 import { ExecArgs } from "@medusajs/framework/types"
-import { loadEnv, normalizeUrl } from "../../../../scripts/medusa/_utils.mjs"
+import { loadEnv, normalizeUrl } from "./_utils.mjs"
 
 async function medusaAdmin(pathname: string, init: RequestInit = {}, retried = false) {
   const env = loadEnv()
@@ -20,7 +25,7 @@ async function medusaAdmin(pathname: string, init: RequestInit = {}, retried = f
   })
 
   if (res.status === 401 && !retried) {
-    const { tryMedusaAdminLogin } = await import("../../../../scripts/medusa/_utils.mjs")
+    const { tryMedusaAdminLogin } = await import("./_utils.mjs")
     token = (await tryMedusaAdminLogin({
       backendUrl,
       email: String(env.MEDUSA_ADMIN_EMAIL || ""),
