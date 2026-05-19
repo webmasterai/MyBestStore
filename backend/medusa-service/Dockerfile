@@ -45,6 +45,10 @@ COPY --from=builder /app/.medusa/server ./
 
 RUN --mount=type=cache,target=/root/.npm npm install --omit=dev --no-audit --no-fund --prefer-offline
 
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 9000
 
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["npm", "run", "start"]
