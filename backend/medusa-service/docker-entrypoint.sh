@@ -6,6 +6,11 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 
+# In-compose Postgres does not use TLS; avoid SSL unless explicitly enabled.
+if [ "${DATABASE_SSL:-false}" != "true" ] && [ "${DATABASE_SSL:-false}" != "1" ]; then
+  export PGSSLMODE=disable
+fi
+
 echo "[medusa] Running database migrations..."
 npx medusa db:migrate
 

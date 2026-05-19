@@ -2,9 +2,15 @@ import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
+const databaseSsl =
+  process.env.DATABASE_SSL === 'true' || process.env.DATABASE_SSL === '1'
+
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
+    databaseDriverOptions: databaseSsl
+      ? { connection: { ssl: { rejectUnauthorized: false } } }
+      : { connection: { ssl: false } },
     redisUrl: process.env.REDIS_URL,
     http: {
       storeCors: process.env.STORE_CORS || "http://localhost:8000,http://localhost:3000",
