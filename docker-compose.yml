@@ -34,8 +34,11 @@ services:
       context: ./backend/medusa-service
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "${MEDUSA_PUBLISH_PORT:-9000}:9000"
+    # No host ports: Coolify routes to container :9000 via domain. For local access only, set MEDUSA_PUBLISH_PORT=9000 and uncomment:
+    # ports:
+    #   - "${MEDUSA_PUBLISH_PORT:-9000}:9000"
+    expose:
+      - "9000"
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgres://medusa:medusa@postgres:5432/medusa}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
@@ -62,8 +65,12 @@ services:
         NEXT_PUBLIC_MEDUSA_ADMIN_URL: ${NEXT_PUBLIC_MEDUSA_ADMIN_URL:-}
         NEXT_PUBLIC_COMMERCE_PROVIDER: ${NEXT_PUBLIC_COMMERCE_PROVIDER:-medusa}
     restart: unless-stopped
-    ports:
-      - "${WEB_PUBLISH_PORT:-3000}:3000"
+    # No host ports: avoids "port 3000 already allocated" when Coolify proxies by domain.
+    # For local `docker compose up`, uncomment:
+    # ports:
+    #   - "${WEB_PUBLISH_PORT:-3000}:3000"
+    expose:
+      - "3000"
     environment:
       MEDUSA_BACKEND_URL: ${MEDUSA_BACKEND_URL:-http://medusa:9000}
       MEDUSA_ADMIN_API_TOKEN: ${MEDUSA_ADMIN_API_TOKEN:-}
