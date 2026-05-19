@@ -1,30 +1,28 @@
 # syntax=docker/dockerfile:1
-
-# Medusa v2 API + Admin production optimized Dockerfile
+# Medusa v2 production: build at /app, run from /app/.medusa/server (compiled medusa-config.js)
 
 FROM node:20-bookworm-slim AS base
 
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV npm_config_audit=false
+ENV npm_config_fund=false
+ENV npm_config_progress=false
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   openssl \
   ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-
-# Install all dependencies once
 FROM base AS deps
 
 ENV NODE_ENV=development
 
 COPY package.json package-lock.json ./
 
-RUN --mount=type=cache,target=/root/.npm npm ci
+RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund --prefer-offline
 
-
-# Build Medusa
 FROM base AS builder
 
 ENV NODE_ENV=production
@@ -37,25 +35,15 @@ COPY src ./src
 
 RUN npm run build
 
-# Remove dev dependencies after build
-RUN npm prune --omit=dev
-
-
-# Runtime image
 FROM base AS runner
 
 ENV NODE_ENV=production
 
-WORKDIR /app
+WORKDIR /app/.medusa/server
 
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/package-lock.json ./package-lock.json
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/medusa-config.ts ./medusa-config.ts
-COPY --from=builder /app/tsconfig.json ./tsconfig.json
-COPY --from=builder /app/instrumentation.ts ./instrumentation.ts
-COPY --from=builder /app/src ./src
-COPY --from=builder /app/.medusa ./.medusa
+COPY --from=builder /app/.medusa/server ./
+
+RUN --mount=type=cache,target=/root/.npm npm install --omit=dev --no-audit --no-fund --prefer-offline
 
 EXPOSE 9000
 
