@@ -1,6 +1,7 @@
 import { HeroSlider } from "@/components/HeroSlider";
 import { ProductGrid } from "@/components/ProductGrid";
 import { CategorySection, type Category } from "@/components/CategorySection";
+import { TrustBar } from "@/components/TrustBar";
 import {
   getCategories,
   getHomepageContent,
@@ -72,42 +73,46 @@ export default async function Home() {
         slides={homepageContent?.heroSlides}
       />
 
+      <TrustBar />
+
       {/* New Arrivals */}
-      <section id="new-arrivals" className="py-12 md:py-16">
+      <section id="new-arrivals" className="py-12 md:py-20 scroll-mt-24">
         <div className="mx-auto max-w-7xl px-4">
-          <div className="flex items-end justify-between mb-8">
+          <div className="flex items-end justify-between mb-10 gap-4">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+              <div className="section-eyebrow">Just landed</div>
+              <h2 className="section-title mt-3">
                 {homepageContent?.newArrivalsTitle || "New Arrivals"}
               </h2>
               <p className="mt-2 text-slate-500">
                 Check out our latest drops.
               </p>
             </div>
-            <a href="/search" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+            <a href="/search" className="section-link shrink-0">
               View all
+              <span aria-hidden="true">→</span>
             </a>
           </div>
 
-          <ProductGrid products={products} />
+          <ProductGrid products={products} variant="scroll" />
         </div>
       </section>
 
       {/* LED TVs Section */}
       {ledTvs && ledTvs.products.nodes.length > 0 && (
-        <section className="py-12 md:py-16 bg-slate-50">
+        <section className="py-14 md:py-20 bg-surface-soft/80">
           <div className="mx-auto max-w-7xl px-4">
-            <div className="flex items-end justify-between mb-8">
+            <div className="flex items-end justify-between mb-10 gap-4">
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-                  LED TV'S
-                </h2>
+                <div className="section-eyebrow">Entertainment</div>
+                <h2 className="section-title mt-3">LED TV&apos;S</h2>
                 <p className="mt-2 text-slate-500">
                   Premium entertainment systems.
                 </p>
               </div>
-              <a href="/collections/led-tv" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+              <a href="/collections/led-tv" className="section-link shrink-0">
                 View all
+                <span aria-hidden="true">→</span>
               </a>
             </div>
             <ProductGrid products={ledTvs.products.nodes} />
@@ -117,19 +122,19 @@ export default async function Home() {
 
       {/* Sound Bars Section */}
       {soundBars && soundBars.products.nodes.length > 0 && (
-        <section className="py-12 md:py-16">
+        <section className="py-14 md:py-20">
           <div className="mx-auto max-w-7xl px-4">
-            <div className="flex items-end justify-between mb-8">
+            <div className="flex items-end justify-between mb-10 gap-4">
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-                  Sound Bars
-                </h2>
+                <div className="section-eyebrow">Audio</div>
+                <h2 className="section-title mt-3">Sound Bars</h2>
                 <p className="mt-2 text-slate-500">
                   Immersive audio experiences.
                 </p>
               </div>
-              <a href="/collections/sound-bar" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+              <a href="/collections/sound-bar" className="section-link shrink-0">
                 View all
+                <span aria-hidden="true">→</span>
               </a>
             </div>
             <ProductGrid products={soundBars.products.nodes} />
@@ -139,19 +144,19 @@ export default async function Home() {
 
       {/* Air Purifiers Section */}
       {airPurifiers && airPurifiers.products.nodes.length > 0 && (
-        <section className="py-12 md:py-16 bg-slate-50">
+        <section className="py-14 md:py-20 bg-surface-soft/80">
           <div className="mx-auto max-w-7xl px-4">
-            <div className="flex items-end justify-between mb-8">
+            <div className="flex items-end justify-between mb-10 gap-4">
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-                  Air Purifiers
-                </h2>
+                <div className="section-eyebrow">Home wellness</div>
+                <h2 className="section-title mt-3">Air Purifiers</h2>
                 <p className="mt-2 text-slate-500">
                   Clean air for your home.
                 </p>
               </div>
-              <a href="/collections/air-purifiers" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+              <a href="/collections/air-purifiers" className="section-link shrink-0">
                 View all
+                <span aria-hidden="true">→</span>
               </a>
             </div>
             <ProductGrid products={airPurifiers.products.nodes} />
@@ -161,19 +166,19 @@ export default async function Home() {
 
       {/* Home Theater Section */}
       {homeTheater && homeTheater.products.nodes.length > 0 && (
-        <section className="py-12 md:py-16">
+        <section className="py-14 md:py-20">
           <div className="mx-auto max-w-7xl px-4">
-            <div className="flex items-end justify-between mb-8">
+            <div className="flex items-end justify-between mb-10 gap-4">
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-                  Home Theater
-                </h2>
+                <div className="section-eyebrow">Cinema at home</div>
+                <h2 className="section-title mt-3">Home Theater</h2>
                 <p className="mt-2 text-slate-500">
                   Complete cinematic setup.
                 </p>
               </div>
-              <a href="/collections/home-theater" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+              <a href="/collections/home-theater" className="section-link shrink-0">
                 View all
+                <span aria-hidden="true">→</span>
               </a>
             </div>
             <ProductGrid products={homeTheater.products.nodes} />

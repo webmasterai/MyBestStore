@@ -78,7 +78,7 @@ export default async function ProductPage({
             >
               {product.title}
             </h1>
-            <p className="mt-4 text-lg font-semibold text-brand-cyan-deep">
+            <p className="mt-4 text-lg font-semibold text-brand-accent">
               {formatPKR(product.priceRange.minVariantPrice.amount)}
             </p>
           </div>

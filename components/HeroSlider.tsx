@@ -2,8 +2,22 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { formatPKR } from "@/lib/currency";
 import type { HomepageHeroSlide, CommerceProductCard } from "@/lib/commerce/types";
+
+function scrollRailToIndex(rail: HTMLElement, index: number) {
+  const card = rail.children[index] as HTMLElement | undefined;
+  if (!card) return;
+
+  const targetLeft =
+    card.offsetLeft - (rail.clientWidth - card.offsetWidth) / 2;
+
+  rail.scrollTo({
+    left: Math.max(0, targetLeft),
+    behavior: "smooth",
+  });
+}
 
 export function HeroSlider({
   products,
@@ -13,28 +27,29 @@ export function HeroSlider({
   slides?: HomepageHeroSlide[];
 }) {
   const [index, setIndex] = useState(0);
+  const railRef = useRef<HTMLDivElement>(null);
 
   const defaultSlides = useMemo<HomepageHeroSlide[]>(
     () => [
       {
-        eyebrow: "Premium Collection",
-        title: "Modern Style for Everyone",
-        subtitle: "Experience the best quality products with seamless PKR checkout and fast delivery.",
+        eyebrow: "New Season",
+        title: "Fresh Drops Every Week",
+        subtitle: "Curated arrivals with clear PKR prices, smooth checkout, and delivery across Pakistan.",
+        cta: "Browse New",
+        href: "#new-arrivals",
+      },
+      {
+        eyebrow: "Premium Picks",
+        title: "Quality You Can Trust",
+        subtitle: "Hand-selected products from top brands — electronics, home, and lifestyle essentials.",
         cta: "Shop Now",
-        href: "#new-arrivals",
+        href: "/search",
       },
       {
-        eyebrow: "New Arrivals",
-        title: "Fresh Looks for the Season",
-        subtitle: "Our latest collection has arrived. Discover new favorites in fewer taps.",
-        cta: "Explore Arrivals",
-        href: "#new-arrivals",
-      },
-      {
-        eyebrow: "Limited Edition",
-        title: "Exclusive Quality Selection",
-        subtitle: "Hand-picked items designed for those who value style and substance.",
-        cta: "View Collection",
+        eyebrow: "Best Value",
+        title: "Deals Worth Checking",
+        subtitle: "Discover seasonal offers and everyday essentials at prices that make sense.",
+        cta: "View Categories",
         href: "#categories",
       },
     ],
@@ -43,8 +58,6 @@ export function HeroSlider({
 
   const activeSlides = slides && slides.length > 0 ? slides : defaultSlides;
   const currentSlide = activeSlides[index % activeSlides.length];
-  
-  // Use products for images if available, otherwise fallback
   const sliderProducts = products?.slice(0, activeSlides.length) || [];
 
   useEffect(() => {
@@ -54,49 +67,62 @@ export function HeroSlider({
     return () => clearInterval(timer);
   }, [activeSlides.length]);
 
-  return (
-    <section className="relative overflow-hidden bg-slate-50 border-b border-slate-200">
-      <div className="mx-auto max-w-7xl px-4 py-12 md:py-20">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 rounded-full bg-brand-primary/10 px-4 py-1.5 text-xs font-bold text-brand-primary uppercase tracking-widest fx-fade-up">
-              {currentSlide.eyebrow}
-            </div>
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return;
+    scrollRailToIndex(rail, index);
+  }, [index]);
 
-            <h1 className="mt-6 text-5xl md:text-7xl font-black leading-[1.1] tracking-tight text-slate-900 fx-fade-up-delay-1">
+  return (
+    <section className="relative overflow-hidden brand-hero-gradient border-b border-brand-primary/10">
+      <div
+        className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full bg-brand-accent/15 blur-3xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 h-64 w-64 rounded-full bg-brand-primary/10 blur-3xl"
+        aria-hidden="true"
+      />
+
+      <div className="relative mx-auto max-w-7xl px-4 py-8 sm:py-12 md:py-16 lg:py-24">
+        <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16 items-center">
+          <div className="relative z-10 order-2 lg:order-1 min-w-0">
+            <div className="section-eyebrow fx-fade-up">{currentSlide.eyebrow}</div>
+
+            <h1 className="mt-4 sm:mt-6 text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black leading-[1.08] tracking-tight text-brand-ink fx-fade-up-delay-1">
               {currentSlide.title}
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg md:text-xl text-slate-600 leading-relaxed fx-fade-up-delay-2">
+            <p className="mt-4 sm:mt-6 max-w-xl text-base sm:text-lg text-slate-600 leading-relaxed fx-fade-up-delay-2">
               {currentSlide.subtitle}
             </p>
 
-            <div className="mt-10 flex flex-wrap items-center gap-4 fx-fade-up-delay-2">
+            <div className="mt-6 sm:mt-8 flex flex-row flex-wrap items-center gap-3 fx-fade-up-delay-2">
               <Link
                 href={currentSlide.href}
-                className="h-14 px-8 inline-flex items-center justify-center rounded-xl bg-slate-900 text-white font-bold shadow-xl shadow-slate-900/20 hover:bg-brand-primary hover:shadow-brand-primary/30 transition-all active:scale-95"
+                className="brand-cta-primary flex-1 sm:flex-none h-12 sm:h-14 px-6 sm:px-8 inline-flex items-center justify-center rounded-2xl text-white text-sm sm:text-base font-bold transition-all active:scale-[0.98]"
               >
                 {currentSlide.cta}
               </Link>
               <Link
                 href="/search"
-                className="h-14 px-8 inline-flex items-center justify-center rounded-xl border-2 border-slate-200 bg-white text-slate-900 font-bold hover:bg-slate-50 transition-all"
+                className="brand-cta-secondary flex-1 sm:flex-none h-12 sm:h-14 px-6 sm:px-8 inline-flex items-center justify-center rounded-2xl text-sm sm:text-base font-bold transition-all active:scale-[0.98]"
               >
                 Browse Catalog
               </Link>
             </div>
 
-            <div className="mt-12 flex items-center gap-3 fx-fade-up-delay-2">
+            <div className="mt-6 sm:mt-8 flex items-center gap-2">
               {activeSlides.map((_, i) => (
                 <button
                   key={i}
                   type="button"
                   onClick={() => setIndex(i)}
                   className={
-                    "h-1.5 rounded-full transition-all duration-500 " +
+                    "h-2 rounded-full transition-all duration-500 " +
                     (i === index % activeSlides.length
-                      ? "w-12 bg-brand-primary"
-                      : "w-4 bg-slate-300 hover:bg-slate-400")
+                      ? "w-10 bg-brand-accent"
+                      : "w-2 bg-brand-primary/25 hover:bg-brand-primary/40")
                   }
                   aria-label={`Go to slide ${i + 1}`}
                 />
@@ -104,52 +130,108 @@ export function HeroSlider({
             </div>
           </div>
 
-          <div className="relative lg:h-[600px] flex items-center justify-center">
-             <div className="absolute inset-0 bg-radial from-brand-primary/10 to-transparent blur-3xl opacity-50" />
-             
-             <div className="relative w-full max-w-md aspect-square lg:aspect-auto lg:h-full transition-all duration-1000 ease-in-out transform">
-                {activeSlides.map((_, i) => {
-                  const product = sliderProducts[i];
-                  const isActive = i === index % activeSlides.length;
-                  
-                  return (
-                    <div
-                      key={i}
-                      className={
-                        "absolute inset-0 transition-all duration-1000 flex items-center justify-center " +
-                        (isActive ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-90 translate-x-12 pointer-events-none")
-                      }
+          <div className="relative order-1 lg:order-2 flex items-center justify-center w-full min-w-0">
+            <div className="relative w-full max-w-md aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-[520px] lg:max-h-[520px]">
+              <div
+                className="pointer-events-none absolute inset-0 rounded-[2rem] bg-gradient-to-br from-brand-primary/12 via-white to-brand-accent/15 opacity-80"
+                aria-hidden="true"
+              />
+
+              {activeSlides.map((_, i) => {
+                const product = sliderProducts[i];
+                const isActive = i === index % activeSlides.length;
+
+                return (
+                  <div
+                    key={i}
+                    className={
+                      "absolute inset-0 transition-all duration-700 " +
+                      (isActive
+                        ? "opacity-100 scale-100 z-10"
+                        : "opacity-0 scale-[0.97] z-0 pointer-events-none")
+                    }
+                  >
+                    <Link
+                      href={product ? `/product/${product.handle}` : "#new-arrivals"}
+                      className="relative block w-full h-full"
                     >
-                      <div className="relative w-full h-full p-4">
-                        <div className="w-full h-full rounded-3xl bg-white p-4 shadow-2xl border border-slate-100 overflow-hidden group">
-                           {product?.featuredImage?.url ? (
-                             <Image
-                               src={product.featuredImage.url}
-                               alt={product.title}
-                               fill
-                               className="object-contain p-8 group-hover:scale-110 transition-transform duration-700"
-                               priority={isActive}
-                             />
-                           ) : (
-                             <div className="w-full h-full bg-slate-50 rounded-2xl flex items-center justify-center">
-                               <span className="text-slate-300 font-bold">Premium Product</span>
-                             </div>
-                           )}
-                           
-                           {product && (
-                             <div className="absolute bottom-6 left-6 right-6 p-4 rounded-2xl bg-white/80 backdrop-blur-md border border-slate-200/50 shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                               <div className="text-xs font-bold text-brand-primary uppercase tracking-tight">{product.title}</div>
-                               <div className="text-sm font-black text-slate-900 mt-1">Available Now</div>
-                             </div>
-                           )}
-                        </div>
+                      <div className="hero-product-stage relative w-full h-full overflow-hidden rounded-[1.75rem] sm:rounded-[2rem] border border-white/70 shadow-[0_20px_50px_-12px_rgba(26,77,143,0.28)]">
+                        <div
+                          className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(34,197,94,0.18),transparent_45%),radial-gradient(circle_at_80%_80%,rgba(26,77,143,0.16),transparent_40%),linear-gradient(160deg,#f8fbff_0%,#ffffff_45%,#f0faf4_100%)]"
+                          aria-hidden="true"
+                        />
+                        <div
+                          className="absolute left-1/2 top-[52%] h-[58%] w-[58%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/70 shadow-[inset_0_0_40px_rgba(26,77,143,0.06)] ring-1 ring-brand-primary/10"
+                          aria-hidden="true"
+                        />
+
+                        {product?.featuredImage?.url ? (
+                          <div className="absolute inset-[8%] sm:inset-[10%]">
+                            <Image
+                              src={product.featuredImage.url}
+                              alt={product.title}
+                              fill
+                              className="object-contain drop-shadow-[0_18px_28px_rgba(15,45,77,0.22)] transition-transform duration-700 group-hover:scale-105"
+                              priority={isActive}
+                              sizes="(max-width: 768px) 90vw, 420px"
+                            />
+                          </div>
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-brand-primary/30 font-bold text-sm">Premium Product</span>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  );
-                })}
-             </div>
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
+
+        {sliderProducts.length > 0 ? (
+          <div className="mt-6 lg:hidden min-w-0">
+            <div
+              ref={railRef}
+              className="flex gap-3 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scrollbar-hide pb-1 touch-pan-x"
+            >
+              {sliderProducts.map((product, i) => (
+                <button
+                  key={product.id}
+                  type="button"
+                  onClick={() => setIndex(i)}
+                  className={
+                    "snap-center shrink-0 w-[38vw] max-w-[160px] rounded-xl border overflow-hidden bg-white product-shadow transition-all text-left " +
+                    (i === index
+                      ? "border-brand-accent ring-2 ring-brand-accent/30"
+                      : "border-brand-primary/10 opacity-90")
+                  }
+                >
+                  <div className="relative aspect-square bg-gradient-to-br from-surface-soft to-white">
+                    {product.featuredImage?.url ? (
+                      <Image
+                        src={product.featuredImage.url}
+                        alt={product.title}
+                        fill
+                        className="object-contain p-2.5"
+                        sizes="160px"
+                      />
+                    ) : null}
+                  </div>
+                  <div className="p-2.5">
+                    <div className="text-xs font-semibold text-brand-ink line-clamp-2 leading-snug">
+                      {product.title}
+                    </div>
+                    <div className="text-xs font-bold text-brand-primary mt-1">
+                      {formatPKR(product.priceRange.minVariantPrice.amount)}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );

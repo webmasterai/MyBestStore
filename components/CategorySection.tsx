@@ -23,6 +23,51 @@ export type Category = {
   };
 };
 
+function CategoryCard({
+  category,
+  className = "",
+}: {
+  category: Category;
+  className?: string;
+}) {
+  const fallbackImage = category.products?.nodes?.[0]?.featuredImage || null;
+  const categoryImage = category.image || fallbackImage;
+
+  return (
+    <Link
+      href={`/collections/${category.handle}`}
+      className={
+        "group relative overflow-hidden bg-brand-primary/10 border border-brand-primary/10 transition-all duration-500 product-shadow hover:product-shadow-hover " +
+        className
+      }
+    >
+      {categoryImage?.url ? (
+        <Image
+          src={categoryImage.url}
+          alt={categoryImage.altText || category.title}
+          fill
+          className="object-cover transition-transform duration-1000 group-hover:scale-110"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-slate-200" />
+      )}
+
+      <div className="absolute inset-0 bg-gradient-to-t from-brand-primary-deep/90 via-brand-primary/30 to-transparent opacity-85 group-hover:opacity-95 transition-opacity duration-500" />
+
+      <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-8">
+        <div className="transform translate-y-2 sm:translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+          <h3 className="text-xl sm:text-3xl font-black text-white tracking-tight">
+            {category.title}
+          </h3>
+          <div className="mt-4 flex items-center gap-2">
+            <div className="h-0.5 w-8 bg-brand-accent group-hover:w-12 sm:group-hover:w-16 transition-all duration-500" />
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export function CategorySection({
   categories,
   title = "Shop by Category",
@@ -31,63 +76,24 @@ export function CategorySection({
   title?: string;
 }) {
   return (
-    <section id="categories" className="py-16 md:py-24 bg-slate-50">
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="flex flex-col items-center text-center mb-12 fx-fade-up">
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900">
-            {title}
-          </h2>
+    <section id="categories" className="py-12 md:py-24 scroll-mt-24 bg-gradient-to-b from-surface-soft to-background">
+      <div className="mx-auto max-w-7xl px-4">
+        <div className="flex flex-col items-center text-center mb-8 md:mb-12 fx-fade-up">
+          <div className="section-eyebrow">Collections</div>
+          <h2 className="section-title mt-4">{title}</h2>
           <p className="mt-4 text-slate-500 max-w-lg">
             Explore our curated categories and find the perfect pieces for your lifestyle.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {categories.map((c) => {
-            const fallbackImage = c.products?.nodes?.[0]?.featuredImage || null;
-            const categoryImage = c.image || fallbackImage;
-
-            return (
-              <Link
-                key={c.id}
-                href={`/collections/${c.handle}`}
-                className="group relative h-[450px] rounded-2xl overflow-hidden bg-slate-200 border border-slate-200 transition-all duration-500 product-shadow hover:product-shadow-hover"
-              >
-                {categoryImage?.url ? (
-                  <Image
-                    src={categoryImage.url}
-                    alt={categoryImage.altText || c.title}
-                    fill
-                    className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-slate-200" />
-                )}
-
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-linear-to-t from-slate-900/80 via-slate-900/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
-                
-                <div className="absolute inset-0 flex flex-col justify-end p-8">
-                  <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                    <div className="text-xs font-black text-brand-primary uppercase tracking-[0.2em] mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                      Explore Series
-                    </div>
-                    <h3 className="text-3xl font-black text-white tracking-tight mb-2">
-                      {c.title}
-                    </h3>
-                    <p className="text-slate-300 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100">
-                      Discover our latest arrivals in {c.title.toLowerCase()}.
-                    </p>
-                    
-                    <div className="mt-6 flex items-center gap-2">
-                      <div className="h-0.5 w-8 bg-brand-primary group-hover:w-16 transition-all duration-500" />
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest">Shop Now</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+        <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 pb-1 md:pb-0 touch-pan-x">
+          {categories.map((c) => (
+            <CategoryCard
+              key={c.id}
+              category={c}
+              className="snap-center shrink-0 w-[78vw] max-w-[320px] md:w-auto md:max-w-none md:shrink h-[280px] sm:h-[340px] md:h-[420px] rounded-2xl md:rounded-3xl"
+            />
+          ))}
         </div>
       </div>
     </section>
