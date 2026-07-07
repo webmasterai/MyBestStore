@@ -4,6 +4,10 @@ import { ExecArgs } from "@medusajs/framework/types";
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import { createApiKeysWorkflow } from "@medusajs/medusa/core-flows";
 
+type ApiKeyTokenRef = {
+  token?: string | null;
+};
+
 /**
  * Writes repo-root .env.local from seeded Medusa data.
  * Run: npx medusa exec ./src/scripts/write-frontend-env.ts
@@ -18,7 +22,7 @@ export default async function writeFrontendEnv({ container }: ExecArgs) {
     filters: { type: "publishable" },
   });
 
-  let publishableKey = publishableKeys?.[0];
+  let publishableKey: ApiKeyTokenRef | undefined = publishableKeys?.[0];
   if (!publishableKey?.token) {
     const {
       result: [created],
@@ -36,7 +40,7 @@ export default async function writeFrontendEnv({ container }: ExecArgs) {
     filters: { type: "secret" },
   });
 
-  let secretKey = secretKeys?.[0];
+  let secretKey: ApiKeyTokenRef | undefined = secretKeys?.[0];
   if (!secretKey?.token) {
     const {
       result: [created],
