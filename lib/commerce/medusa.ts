@@ -119,6 +119,27 @@ function getCollectionImageUrl(collection: MedusaCollection): string | null {
   return fromMetadata || collection.products?.[0]?.thumbnail || null;
 }
 
+async function fetchCollectionThumbnail(collectionId: string): Promise<string | null> {
+  const searchParams = new URLSearchParams({
+    limit: "1",
+    "collection_id[]": collectionId,
+    fields: "+thumbnail",
+    region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || "",
+  });
+  if (!searchParams.get("region_id")) {
+    searchParams.delete("region_id");
+  }
+
+  const data = await medusaFetch<{ products: MedusaProduct[] }>({
+    path: "/store/products",
+    searchParams,
+    revalidate: 300,
+    tags: ["home-categories-thumb", collectionId],
+  });
+
+  return data.products?.[0]?.thumbnail || null;
+}
+
 function mapCollectionToCommerceCategory(
   collection: MedusaCollection
 ): CommerceCategory {
@@ -404,7 +425,24 @@ export async function medusaGetCategories(first: number): Promise<CommerceCatego
     tags: ["home-categories"],
   });
 
-  return (collectionData.collections || []).map(mapCollectionToCommerceCategory);
+  const collections = collectionData.collections || [];
+
+  return Promise.all(
+    collections.map(async (collection) => {
+      if (getCollectionImageUrl(collection)) {
+        return mapCollectionToCommerceCategory(collection);
+      }
+
+      const thumbnail = await fetchCollectionThumbnail(collection.id);
+
+      return mapCollectionToCommerceCategory({
+        ...collection,
+        products: thumbnail
+          ? [{ id: `${collection.id}-thumb`, thumbnail, title: collection.title }]
+          : [],
+      });
+    })
+  );
 }
 
 export async function medusaGetProductByHandle(
