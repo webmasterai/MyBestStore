@@ -79,22 +79,26 @@ export function CategorySection({
     <section id="categories" className="py-12 md:py-24 scroll-mt-24 bg-gradient-to-b from-surface-soft to-background">
       <div className="mx-auto max-w-7xl px-4">
         <div className="flex flex-col items-center text-center mb-8 md:mb-12 fx-fade-up">
-          <div className="section-eyebrow">Collections</div>
+          <div className="section-eyebrow">Categories</div>
           <h2 className="section-title mt-4">{title}</h2>
           <p className="mt-4 text-slate-500 max-w-lg">
             Explore our curated categories and find the perfect pieces for your lifestyle.
           </p>
         </div>
 
-        <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 pb-1 md:pb-0 touch-pan-x">
-          {categories.map((c) => (
-            <CategoryCard
-              key={c.id}
-              category={c}
-              className="snap-center shrink-0 w-[78vw] max-w-[320px] md:w-auto md:max-w-none md:shrink h-[280px] sm:h-[340px] md:h-[420px] rounded-2xl md:rounded-3xl"
-            />
-          ))}
-        </div>
+        {categories.length === 0 ? (
+          <p className="text-center text-slate-500">No categories found yet.</p>
+        ) : (
+          <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 pb-1 md:pb-0 touch-pan-x">
+            {categories.map((c) => (
+              <CategoryCard
+                key={c.id}
+                category={c}
+                className="snap-center shrink-0 w-[78vw] max-w-[320px] md:w-auto md:max-w-none md:shrink h-[280px] sm:h-[340px] md:h-[420px] rounded-2xl md:rounded-3xl"
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

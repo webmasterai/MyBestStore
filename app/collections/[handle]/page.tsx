@@ -25,10 +25,11 @@ export default async function CollectionPage({
 
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
-  
+
   const handle = resolvedParams.handle;
-  const page = parseInt(resolvedSearchParams.page || "1", 10);
   const pageSize = 24;
+  const parsedPage = parseInt(resolvedSearchParams.page || "1", 10);
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const offset = (page - 1) * pageSize;
 
   if (!handle || typeof handle !== "string") notFound();
@@ -58,6 +59,11 @@ export default async function CollectionPage({
 
   if (!collection) notFound();
 
+  const totalCount = collection.products.pageInfo?.totalCount || 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
+  if (page > totalPages) notFound();
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:py-12">
       <div className="relative overflow-hidden rounded-3xl border border-brand-ink/10 bg-white shadow-[0_12px_28px_rgba(42,33,24,0.08)] mb-10">
@@ -76,17 +82,23 @@ export default async function CollectionPage({
             {collection.title}
           </h1>
           <p className="mt-2 text-brand-ink/60 font-medium">
-            Explore our curated selection of {collection.title.toLowerCase()}
+            {totalCount} {totalCount === 1 ? "product" : "products"}
           </p>
         </div>
       </div>
 
-      <ProductGrid products={collection.products.nodes} />
+      {collection.products.nodes.length > 0 ? (
+        <ProductGrid products={collection.products.nodes} />
+      ) : (
+        <p className="text-center py-20 text-slate-500 font-medium">
+          No products found in this category.
+        </p>
+      )}
 
       <Pagination
         currentPage={page}
         hasNextPage={collection.products.pageInfo?.hasNextPage || false}
-        totalCount={collection.products.pageInfo?.totalCount || 0}
+        totalCount={totalCount}
         pageSize={pageSize}
         basePath={`/collections/${handle}`}
       />

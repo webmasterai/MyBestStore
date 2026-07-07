@@ -39,7 +39,7 @@ export default async function Home() {
   try {
     [productsData, categories, homepageContent, ledTvs, soundBars, airPurifiers, homeTheater] = await Promise.all([
       getHomeProducts(8),
-      getCategories(),
+      getCategories(100),
       getHomepageContent(),
       getCollectionByHandle("led-tv", 8),
       getCollectionByHandle("sound-bar", 8),

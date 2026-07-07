@@ -105,15 +105,58 @@ type MedusaCollection = {
   handle?: string | null;
   title?: string | null;
   metadata?: Record<string, unknown> | null;
-};
-
-type MedusaProductCategory = {
-  id: string;
-  handle?: string | null;
-  name?: string | null;
-  metadata?: Record<string, unknown> | null;
   products?: MedusaProduct[];
 };
+
+function getCollectionImageUrl(collection: MedusaCollection): string | null {
+  const fromMetadata =
+    typeof collection.metadata?.image === "string"
+      ? collection.metadata.image
+      : typeof collection.metadata?.image_url === "string"
+        ? collection.metadata.image_url
+        : null;
+
+  return fromMetadata || collection.products?.[0]?.thumbnail || null;
+}
+
+function mapCollectionToCommerceCategory(
+  collection: MedusaCollection
+): CommerceCategory {
+  const title = collection.title || "Untitled collection";
+  const imageUrl = getCollectionImageUrl(collection);
+
+  return {
+    id: collection.id,
+    handle: collection.handle || collection.id,
+    title,
+    image: mapImage(imageUrl, title),
+    products: {
+      nodes: (collection.products || []).slice(0, 1).map((p) => ({
+        featuredImage: mapImage(p.thumbnail, p.title || null),
+      })),
+    },
+  };
+}
+
+function buildProductSearchParams(
+  first: number,
+  offset: number,
+  extra?: Record<string, string>
+): URLSearchParams {
+  const searchParams = new URLSearchParams({
+    limit: String(first),
+    offset: String(offset),
+    fields: "*variants,*variants.calculated_price,+variants.prices,+thumbnail,+images",
+    region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || "",
+    ...extra,
+  });
+
+  if (!searchParams.get("region_id")) {
+    searchParams.delete("region_id");
+  }
+
+  return searchParams;
+}
 
 type MedusaStore = {
   id: string;
@@ -350,75 +393,18 @@ export async function medusaGetHomeProducts(
 }
 
 export async function medusaGetCategories(first: number): Promise<CommerceCategory[]> {
-  const categoryData = await medusaFetch<{ product_categories: MedusaProductCategory[] }>({
-    path: "/store/product-categories",
-    searchParams: new URLSearchParams({ 
-      limit: String(first),
-      fields: "*products,+products.thumbnail"
-    }),
-    revalidate: 300,
-    tags: ["home-categories"],
-  });
-
-  const categories = categoryData.product_categories || [];
-  if (categories.length > 0) {
-    return categories.map((c) => {
-      const imageFromMetadata =
-        typeof c.metadata?.image === "string"
-          ? c.metadata.image
-          : typeof c.metadata?.image_url === "string"
-            ? c.metadata.image_url
-            : null;
-
-      const firstProductImage = c.products?.[0]?.thumbnail || null;
-
-      return {
-        id: c.id,
-        handle: c.handle || c.id,
-        title: c.name || "Untitled category",
-        image: mapImage(imageFromMetadata || firstProductImage, c.name || null),
-        products: {
-          nodes: (c.products || []).slice(0, 1).map(p => ({
-            featuredImage: mapImage(p.thumbnail, p.title || null)
-          }))
-        }
-      };
-    });
-  }
-
-  // Fallback to collections if no categories
-  const collectionData = await medusaFetch<{ collections: (MedusaCollection & { products?: MedusaProduct[] })[] }>({
+  const collectionData = await medusaFetch<{
+    collections: MedusaCollection[];
+  }>({
     path: "/store/collections",
-    searchParams: new URLSearchParams({ 
+    searchParams: new URLSearchParams({
       limit: String(first),
-      fields: "*products,+products.thumbnail"
     }),
     revalidate: 300,
     tags: ["home-categories"],
   });
 
-  return (collectionData.collections || []).map((c) => {
-    const imageUrl =
-      typeof c.metadata?.image === "string"
-        ? c.metadata.image
-        : typeof c.metadata?.image_url === "string"
-          ? c.metadata.image_url
-          : null;
-
-    const firstProductImage = c.products?.[0]?.thumbnail || null;
-
-    return {
-      id: c.id,
-      handle: c.handle || c.id,
-      title: c.title || "Untitled collection",
-      image: mapImage(imageUrl || firstProductImage, c.title || null),
-      products: {
-        nodes: (c.products || []).slice(0, 1).map(p => ({
-          featuredImage: mapImage(p.thumbnail, p.title || null)
-        }))
-      }
-    };
-  });
+  return (collectionData.collections || []).map(mapCollectionToCommerceCategory);
 }
 
 export async function medusaGetProductByHandle(
@@ -452,68 +438,6 @@ export async function medusaGetCollectionByHandle(
   first: number,
   offset = 0
 ): Promise<CommerceCollectionDetail | null> {
-  const categoryData = await medusaFetch<{ product_categories: MedusaProductCategory[] }>({
-    path: "/store/product-categories",
-    searchParams: new URLSearchParams({ handle, limit: "1" }),
-    revalidate: 120,
-    tags: ["collection", handle],
-  });
-
-  const category = categoryData.product_categories?.[0];
-  if (category) {
-    const baseParams = new URLSearchParams({
-      limit: String(first),
-      offset: String(offset),
-      fields: "*variants,*variants.calculated_price,+variants.prices,+thumbnail,+images",
-      region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || "",
-    });
-    if (!baseParams.get("region_id")) {
-      baseParams.delete("region_id");
-    }
-
-    const categoryParams = new URLSearchParams(baseParams);
-    categoryParams.append("category_id[]", category.id);
-
-    let productsData: { products: MedusaProduct[]; count: number };
-    try {
-      productsData = await medusaFetch<{ products: MedusaProduct[]; count: number }>({
-        path: "/store/products",
-        searchParams: categoryParams,
-        revalidate: 120,
-        tags: ["collection-products", handle],
-      });
-    } catch {
-      const fallbackParams = new URLSearchParams(baseParams);
-      fallbackParams.set("category_id", category.id);
-      productsData = await medusaFetch<{ products: MedusaProduct[]; count: number }>({
-        path: "/store/products",
-        searchParams: fallbackParams,
-        revalidate: 120,
-        tags: ["collection-products", handle],
-      });
-    }
-
-    return {
-      id: category.id,
-      title: category.name || "Collection",
-      image: mapImage(
-        typeof category.metadata?.image === "string"
-          ? category.metadata.image
-          : typeof category.metadata?.image_url === "string"
-            ? category.metadata.image_url
-            : null,
-        category.name || null
-      ),
-      products: {
-        nodes: (productsData.products || []).map(mapProductCard),
-        pageInfo: {
-          hasNextPage: offset + (productsData.products?.length || 0) < (productsData.count || 0),
-          totalCount: productsData.count || 0,
-        },
-      },
-    };
-  }
-
   const collectionData = await medusaFetch<{ collections: MedusaCollection[] }>({
     path: "/store/collections",
     searchParams: new URLSearchParams({ handle, limit: "1" }),
@@ -526,28 +450,19 @@ export async function medusaGetCollectionByHandle(
 
   const productsData = await medusaFetch<{ products: MedusaProduct[]; count: number }>({
     path: "/store/products",
-    searchParams: new URLSearchParams({
-      limit: String(first),
-      offset: String(offset),
+    searchParams: buildProductSearchParams(first, offset, {
       "collection_id[]": collection.id,
-      fields: "*variants,*variants.calculated_price,+variants.prices,+thumbnail,+images",
-      region_id: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID || "",
     }),
     revalidate: 120,
     tags: ["collection-products", handle],
   });
 
+  const title = collection.title || "Collection";
+
   return {
     id: collection.id,
-    title: collection.title || "Collection",
-    image: mapImage(
-      typeof collection.metadata?.image === "string"
-        ? collection.metadata.image
-        : typeof collection.metadata?.image_url === "string"
-          ? collection.metadata.image_url
-          : null,
-      collection.title || null
-    ),
+    title,
+    image: mapImage(getCollectionImageUrl(collection), title),
     products: {
       nodes: (productsData.products || []).map(mapProductCard),
       pageInfo: {

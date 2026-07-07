@@ -46,7 +46,7 @@ export async function getHomeProducts(
   return medusaGetHomeProducts(first, offset);
 }
 
-export async function getCategories(first = 24): Promise<CommerceCategory[]> {
+export async function getCategories(first = 100): Promise<CommerceCategory[]> {
   return medusaGetCategories(first);
 }
 
