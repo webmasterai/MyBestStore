@@ -103,13 +103,13 @@ export function CategorySection({
         {categories.length === 0 ? (
           <p className="text-center text-slate-500">No categories found yet.</p>
         ) : (
-          <div className="max-h-[min(72vh,760px)] overflow-y-auto overscroll-y-contain scrollbar-hide pr-1 touch-pan-y">
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5">
+          <div className="max-h-[min(72vh,760px)] overflow-y-auto overscroll-y-contain scrollbar-hide pr-1 touch-pan-y md:max-h-none md:overflow-visible md:pr-0">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
               {categories.map((c) => (
                 <CategoryCard
                   key={c.id}
                   category={c}
-                  className="h-[180px] sm:h-[220px] md:h-[260px] rounded-2xl"
+                  className="h-[180px] sm:h-[220px] md:h-[260px] lg:h-[280px] rounded-2xl"
                 />
               ))}
             </div>
